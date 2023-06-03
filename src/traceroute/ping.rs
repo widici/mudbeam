@@ -20,6 +20,7 @@ pub fn ping(ip: IpAddr) {
     packet.set_icmp_type(EchoRequest);
     packet.set_checksum(checksum(packet.packet(), 1));
 
+    tx.set_ttl(64).unwrap();
     match tx.send_to(packet, ip) {
         Ok(bytes) => println!("Success! sent {:?} bytes", bytes),
         Err(_) => panic!("Failed to send packet!")
