@@ -7,18 +7,19 @@ use crate::error::Error;
 
 pub struct Pinger<'a> {
     tx: TransportSender,
-    rx_iter: IcmpTransportChannelIterator<'a>
+    rx_iter: IcmpTransportChannelIterator<'a>,
+    target_ip: IpAddr
 }
 
 impl<'a> Pinger<'a> {
-    pub fn new(tx: TransportSender, rx: &'a mut TransportReceiver) -> Result<Pinger<'a>, Error> {
+    pub fn new(tx: TransportSender, rx: &'a mut TransportReceiver, target_ip: IpAddr) -> Result<Pinger<'a>, Error> {
         let rx_iter = icmp_packet_iter(rx);
 
-        Ok(Pinger { tx, rx_iter })
+        Ok(Pinger { tx, rx_iter, target_ip })
     }
 
 
-    pub fn send(&mut self, ttl: u8, addr: IpAddr) -> Result<(), Error> {
+    pub fn send(&mut self, ttl: u8) -> Result<(), Error> {
         let mut payload = [0u8; 64];
 
         let mut packet = MutableEchoRequestPacket::new(&mut payload).unwrap();
@@ -28,7 +29,7 @@ impl<'a> Pinger<'a> {
         let tx = &mut self.tx;
         tx.set_ttl(ttl).unwrap();
 
-        return match tx.send_to(packet, addr) {
+        return match tx.send_to(packet, self.target_ip) {
             Ok(_) =>  Ok(()),
             Err(e) => {
                 let description = String::from(format!("Failed to send packet!: {}", e));
