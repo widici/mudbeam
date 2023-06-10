@@ -1,7 +1,5 @@
-use std::net::IpAddr;
-use dns_lookup::lookup_host;
 use pnet::packet::ip::IpNextHeaderProtocols::Icmp;
-use pnet::transport::{TransportProtocol::Ipv4, transport_channel, TransportChannelType::Layer4, icmp_packet_iter};
+use pnet::transport::{TransportProtocol::Ipv4, transport_channel, TransportChannelType::Layer4};
 
 use crate::error::Error;
 use crate::ipresolver::get_ip_addr;

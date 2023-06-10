@@ -1,11 +1,8 @@
-use pnet::packet::icmp::{echo_request::MutableEchoRequestPacket, IcmpTypes::EchoRequest, echo_reply::EchoReplyPacket};
-use pnet::packet::{ip::IpNextHeaderProtocols::Icmp, Packet};
-use pnet::transport::{icmp_packet_iter, IcmpTransportChannelIterator, transport_channel, TransportChannelType::Layer4, TransportProtocol::Ipv4, TransportReceiver, TransportSender};
+use pnet::packet::icmp::{echo_request::MutableEchoRequestPacket, IcmpTypes::EchoRequest};
+use pnet::packet::Packet;
+use pnet::transport::{icmp_packet_iter, IcmpTransportChannelIterator, TransportReceiver, TransportSender};
 use pnet::util::checksum;
-use std::{net::IpAddr, time::Duration};
-use std::cell::RefCell;
-use std::rc::Rc;
-use tokio::runtime::Runtime;
+use std::{net::IpAddr, time::{Duration, Instant}};
 use crate::error::Error;
 
 pub struct Pinger<'a> {
@@ -42,12 +39,14 @@ impl<'a> Pinger<'a> {
 
     pub fn receive(&mut self) -> Result<PingResult, Error> {
         let timeout = Duration::from_millis(10);
+        let start = Instant::now();
 
-        let mut rx_iter = &mut self.rx_iter;
-        loop {
+        let rx_iter = &mut self.rx_iter;
+        while start.elapsed().as_secs() < 5 {
             match rx_iter.next_with_timeout(timeout) {
                 Ok(Some((_, ip))) => {
-                    let result = PingResult::new(ip);
+                    let rtt = start.elapsed().as_millis();
+                    let result = PingResult::Ok{ip, rtt};
                     return Ok(result);
                 },
                 Ok(None) => {
@@ -59,17 +58,17 @@ impl<'a> Pinger<'a> {
                 }
             }
         }
+
+        return Ok(PingResult::Timeout)
     }
 
 }
 
 #[derive(Debug)]
-pub struct PingResult {
-    ip: IpAddr,
-}
-
-impl PingResult {
-    pub fn new(ip: IpAddr) -> PingResult {
-        return PingResult { ip }
-    }
+pub enum PingResult {
+    Ok {
+        ip: IpAddr,
+        rtt: u128,
+    },
+    Timeout,
 }
