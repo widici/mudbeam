@@ -2,13 +2,12 @@ mod traceroute;
 mod ping;
 mod error;
 mod ipresolver;
+mod parsing;
 
 use traceroute::trace;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    if let Some(ip) = args.get(1).cloned() {
-        trace(ip).unwrap();
-    }
-
+    let args = parsing::parse();
+    let ip = args.get_one::<String>("IP").unwrap();
+    trace(ip.to_owned()).unwrap();
 }

@@ -1,25 +1,32 @@
 use pnet::packet::icmp::{echo_request::MutableEchoRequestPacket, IcmpTypes::EchoRequest};
 use pnet::packet::Packet;
-use pnet::transport::{icmp_packet_iter, IcmpTransportChannelIterator, TransportReceiver, TransportSender};
+use pnet::packet::ip::IpNextHeaderProtocols::Icmp;
+use pnet::transport::{TransportProtocol::Ipv4, transport_channel, TransportChannelType::Layer4};
+use pnet::transport::{icmp_packet_iter, TransportReceiver, TransportSender};
 use pnet::util::checksum;
 use std::{net::IpAddr, time::{Duration, Instant}};
 use crate::error::Error;
 
-pub struct Pinger<'a> {
+pub struct Pinger {
     tx: TransportSender,
-    rx_iter: IcmpTransportChannelIterator<'a>,
+    rx: TransportReceiver,
     target_ip: IpAddr
 }
 
-impl<'a> Pinger<'a> {
-    pub fn new(tx: TransportSender, rx: &'a mut TransportReceiver, target_ip: IpAddr) -> Result<Pinger<'a>, Error> {
-        let rx_iter = icmp_packet_iter(rx);
+impl Pinger {
+    pub fn new(target_ip: IpAddr) -> Result<Pinger, Error> {
+        let (tx, rx) = match transport_channel(1500, Layer4(Ipv4(Icmp))) {
+            Ok((tx, rx)) => (tx, rx),
+            Err(e) => {
+                let description = format!("Failed to establish transport stream!: {}", e);
+                return Err(Error::new(description));
+            }
+        };
 
-        Ok(Pinger { tx, rx_iter, target_ip })
+        Ok(Pinger { tx, rx, target_ip })
     }
 
-
-    pub fn send(&mut self, ttl: u8) -> Result<(), Error> {
+    pub fn send(&mut self, ttl: u8) -> Result<Instant, Error> {
         let mut payload = [0u8; 64];
 
         let mut packet = MutableEchoRequestPacket::new(&mut payload).unwrap();
@@ -30,7 +37,7 @@ impl<'a> Pinger<'a> {
         tx.set_ttl(ttl).unwrap();
 
         return match tx.send_to(packet, self.target_ip) {
-            Ok(_) =>  Ok(()),
+            Ok(_) =>  Ok(Instant::now()),
             Err(e) => {
                 let description = String::from(format!("Failed to send packet!: {}", e));
                 Err(Error::new(description))
@@ -38,11 +45,10 @@ impl<'a> Pinger<'a> {
         }
     }
 
-    pub fn receive(&mut self) -> Result<PingResult, Error> {
+    pub fn receive(&mut self, start: Instant) -> Result<PingResult, Error> {
         let timeout = Duration::from_millis(10);
-        let start = Instant::now();
 
-        let rx_iter = &mut self.rx_iter;
+        let mut rx_iter = icmp_packet_iter(&mut self.rx);
         while start.elapsed().as_secs() < 5 {
             match rx_iter.next_with_timeout(timeout) {
                 Ok(Some((_, ip))) => {
