@@ -55,8 +55,8 @@ impl Pinger {
             match rx_iter.next_with_timeout(timeout) {
                 Ok(Some((_, ip))) => {
                     let rtt = start.elapsed().as_millis();
-                    let result = PingResult::Ok{ip, rtt};
-                    return Ok(result);
+                    let result = PingResult::Ok { ip, rtt };
+                    return Ok(result)
                 },
                 Ok(None) => {
                     continue;
@@ -86,12 +86,12 @@ impl Display for PingResult {
         match self {
             PingResult::Ok { ip, rtt } => {
                 if let Some(hostname) = get_url_from_ip(ip) {
-                    write!(f, "{} {}[{}]", rtt, hostname, ip)?
+                    write!(f, "{} {} [{}]", rtt, hostname, ip)?
                 } else {
                     write!(f, "{} {}", rtt, ip)?
                 }
             },
-            PingResult::Timeout => write!(f, "-")?,
+            PingResult::Timeout => write!(f, "*")?,
         }
 
         Ok(())

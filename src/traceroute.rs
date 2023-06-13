@@ -8,20 +8,18 @@ pub fn trace(addr: String) -> Result<(), Error> {
     let mut pinger = Pinger::new(target_ip)?;
 
     // Traceroute command
-    let mut ttl: u8 = 1;
-    loop {
+    for ttl in 1..=64 {
         let start = pinger.send(ttl)?;
         let response = pinger.receive(start).unwrap();
 
-        println!(" {} {}", ttl, response);
+        let formatted_ttl = format!("{}{}", " ".repeat(2 - ttl.to_string().len()), ttl);
+        println!("{} {}", formatted_ttl, response);
 
         if let PingResult::Ok {ip, .. } = response {
             if ip == target_ip {
                 break;
             }
         }
-
-        ttl += 1;
     }
 
     Ok(())
