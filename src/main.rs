@@ -1,7 +1,7 @@
 mod traceroute;
 mod ping;
 mod error;
-mod ipresolver;
+mod util;
 mod parsing;
 
 use traceroute::trace;

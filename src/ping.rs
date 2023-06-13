@@ -5,12 +5,14 @@ use pnet::transport::{TransportProtocol::Ipv4, transport_channel, TransportChann
 use pnet::transport::{icmp_packet_iter, TransportReceiver, TransportSender};
 use pnet::util::checksum;
 use std::{net::IpAddr, time::{Duration, Instant}};
+use std::fmt::{Display, Formatter};
 use crate::error::Error;
+use crate::util::get_url_from_ip;
 
 pub struct Pinger {
     tx: TransportSender,
     rx: TransportReceiver,
-    target_ip: IpAddr
+    target_ip: IpAddr,
 }
 
 impl Pinger {
@@ -49,7 +51,7 @@ impl Pinger {
         let timeout = Duration::from_millis(10);
 
         let mut rx_iter = icmp_packet_iter(&mut self.rx);
-        while start.elapsed().as_secs() < 5 {
+        while start.elapsed().as_secs() < 3 {
             match rx_iter.next_with_timeout(timeout) {
                 Ok(Some((_, ip))) => {
                     let rtt = start.elapsed().as_millis();
@@ -68,7 +70,6 @@ impl Pinger {
 
         return Ok(PingResult::Timeout)
     }
-
 }
 
 #[derive(Debug)]
@@ -78,4 +79,21 @@ pub enum PingResult {
         rtt: u128,
     },
     Timeout,
+}
+
+impl Display for PingResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PingResult::Ok { ip, rtt } => {
+                if let Some(hostname) = get_url_from_ip(ip) {
+                    write!(f, "{} {}[{}]", rtt, hostname, ip)?
+                } else {
+                    write!(f, "{} {}", rtt, ip)?
+                }
+            },
+            PingResult::Timeout => write!(f, "-")?,
+        }
+
+        Ok(())
+    }
 }

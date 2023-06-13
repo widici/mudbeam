@@ -1,5 +1,5 @@
 use std::net::IpAddr;
-use dns_lookup::lookup_host;
+use dns_lookup::{lookup_addr, lookup_host};
 use crate::error::Error;
 
 pub fn get_ip_addr(addr: String) -> Result<IpAddr, Error> {
@@ -21,4 +21,11 @@ fn get_ip_from_url(addr: String) -> Result<IpAddr, Error> {
         },
         Err(_) => Err(error)
     }
+}
+
+pub fn get_url_from_ip(addr: &IpAddr) -> Option<String> {
+    return match lookup_addr(addr) {
+        Ok(url) => Some(url),
+        Err(_) => return None,
+    };
 }
