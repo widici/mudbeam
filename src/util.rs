@@ -1,31 +1,38 @@
 use std::net::IpAddr;
-use dns_lookup::{lookup_addr, lookup_host};
-use crate::error::Error;
+use crate::dns::get_hostname_from_ip;
+use crate::ping::PingResult;
 
-pub fn get_ip_addr(addr: String) -> Result<IpAddr, Error> {
-    if let Ok(ip) = addr.parse::<IpAddr>() {
-        return Ok(ip)
-    }
-
-    return get_ip_from_url(addr)
-}
-
-fn get_ip_from_url(addr: String) -> Result<IpAddr, Error> {
-    let error: Error = Error::new(String::from(format!("Failed to resolve ip address: {}", addr)));
-    return match lookup_host(&addr) {
-        Ok(ips) => {
-            if let Some(ip) = ips.get(0).cloned() {
-                return Ok(ip)
+pub fn summarize_responses(ttl: u8, responses: Vec<PingResult>, target_ip: IpAddr) -> bool {
+    let mut ip_addr: Option<IpAddr> = None;
+    print!("{}  ", space_format(2, ttl.to_string()));
+    for response in responses {
+        match response {
+            PingResult::Ok { ip, rtt } => {
+                print!("{} ms  ", space_format(4, rtt.to_string()));
+                if ip_addr.is_none() {
+                    ip_addr = Some(ip)
+                }
             }
-            Err(error)
-        },
-        Err(_) => Err(error)
+            PingResult::Timeout => print!("    *    ")
+        }
     }
+
+    match ip_addr {
+        None => print!("Timed out.\n"),
+        Some(ip) => {
+            match get_hostname_from_ip(&ip) {
+                None => print!("{}\n", ip),
+                Some(hostname) => print!("{} [{}]\n", ip, hostname)
+            }
+            if ip == target_ip {
+                return true
+            }
+        }
+    }
+
+    return false
 }
 
-pub fn get_url_from_ip(addr: &IpAddr) -> Option<String> {
-    return match lookup_addr(addr) {
-        Ok(url) => Some(url),
-        Err(_) => return None,
-    };
+fn space_format(len: usize, to_format: String) -> String {
+    return format!("{}{}", " ".repeat(len - to_format.len()), to_format)
 }

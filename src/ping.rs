@@ -7,7 +7,6 @@ use pnet::util::checksum;
 use std::{net::IpAddr, time::{Duration, Instant}};
 use std::fmt::{Display, Formatter};
 use crate::error::Error;
-use crate::util::get_url_from_ip;
 
 pub struct Pinger {
     tx: TransportSender,
@@ -84,13 +83,7 @@ pub enum PingResult {
 impl Display for PingResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            PingResult::Ok { ip, rtt } => {
-                if let Some(hostname) = get_url_from_ip(ip) {
-                    write!(f, "{} {} [{}]", rtt, hostname, ip)?
-                } else {
-                    write!(f, "{} {}", rtt, ip)?
-                }
-            },
+            PingResult::Ok { rtt, .. } => write!(f, "{}", rtt)?,
             PingResult::Timeout => write!(f, "*")?,
         }
 
