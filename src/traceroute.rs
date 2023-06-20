@@ -17,7 +17,7 @@ pub fn trace(args: Args) -> Result<(), Error> {
             let response = pinger.receive(start).unwrap();
             responses.push(response)
         }
-        if summarize_responses(ttl, responses, target_ip) {
+        if summarize_responses(ttl, args.max_ttl, responses, target_ip, args.timeout) {
             println!("Trace complete!");
             break;
         }
