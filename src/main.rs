@@ -9,8 +9,8 @@ use traceroute::trace;
 
 fn main() {
     let args = parsing::parse();
-    let ip = args.get_one::<String>("IP").unwrap();
-    match trace(ip.to_owned()) {
+
+    match trace(args) {
         Ok(_) => {}
         Err(e) => eprintln!("{}", e)
     }

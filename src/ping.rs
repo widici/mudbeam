@@ -12,10 +12,11 @@ pub struct Pinger {
     tx: TransportSender,
     rx: TransportReceiver,
     target_ip: IpAddr,
+    timeout: u64,
 }
 
 impl Pinger {
-    pub fn new(target_ip: IpAddr) -> Result<Pinger, Error> {
+    pub fn new(target_ip: IpAddr, timeout: u64) -> Result<Pinger, Error> {
         let (tx, rx) = match transport_channel(1500, Layer4(Ipv4(Icmp))) {
             Ok((tx, rx)) => (tx, rx),
             Err(e) => {
@@ -24,7 +25,7 @@ impl Pinger {
             }
         };
 
-        Ok(Pinger { tx, rx, target_ip })
+        Ok(Pinger { tx, rx, target_ip, timeout })
     }
 
     pub fn send(&mut self, ttl: u8) -> Result<Instant, Error> {
@@ -50,7 +51,7 @@ impl Pinger {
         let timeout = Duration::from_millis(10);
 
         let mut rx_iter = icmp_packet_iter(&mut self.rx);
-        while start.elapsed().as_secs() < 3 {
+        while start.elapsed().as_secs() < self.timeout {
             match rx_iter.next_with_timeout(timeout) {
                 Ok(Some((_, ip))) => {
                     let rtt = start.elapsed().as_millis();
