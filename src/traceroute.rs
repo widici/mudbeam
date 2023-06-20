@@ -12,7 +12,7 @@ pub fn trace(args: Args) -> Result<(), Error> {
     // Traceroute command
     for ttl in args.start_ttl..=args.max_ttl {
         let mut responses: Vec<PingResult> = Vec::with_capacity(64*3);
-        for _ in 0..3 {
+        for _ in 0..args.n_attempts {
             let start = pinger.send(ttl)?;
             let response = pinger.receive(start).unwrap();
             responses.push(response)

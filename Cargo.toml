@@ -1,5 +1,6 @@
 [package]
 name = "mudbeam"
+authors = ["widici"]
 version = "0.1.0"
 edition = "2021"
 
