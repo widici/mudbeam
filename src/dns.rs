@@ -10,7 +10,7 @@ pub fn get_ip_addr(addr: String) -> Result<IpAddr, Error> {
     return get_ip_from_hostname(addr)
 }
 
-fn get_ip_from_hostname(addr: String) -> Result<IpAddr, Error> {
+pub fn get_ip_from_hostname(addr: String) -> Result<IpAddr, Error> {
     let error: Error = Error::new(String::from(format!("Failed to resolve ip address: {}", addr)));
     return match lookup_host(&addr) {
         Ok(ips) => {
