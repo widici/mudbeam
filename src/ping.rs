@@ -91,3 +91,20 @@ impl Display for PingResult {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dns::get_ip_addr;
+
+    #[test]
+    fn pinger_test() {
+        for addr in ["localhost", "google.com", "yahoo.jp.co", "github.com", "1.1.1.1"] {
+            let target_ip = get_ip_addr(addr.to_string()).unwrap();
+            let mut pinger = Pinger::new(target_ip, 1).unwrap();
+            let start = pinger.send(64).unwrap();
+            let result = pinger.receive(start);
+            assert!(result.is_ok())
+        }
+    }
+}

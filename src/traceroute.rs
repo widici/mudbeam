@@ -25,3 +25,24 @@ pub fn trace(args: Args) -> Result<(), Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parsing::Args;
+
+    #[test]
+    fn trace_test() {
+        for addr in ["localhost", "google.com", "yahoo.co.jp", "github.com", "1.1.1.1"] {
+            let args = Args {
+                addr: addr.to_string(),
+                max_ttl: 64,
+                start_ttl: 1,
+                timeout: 1,
+                n_attempts: 1,
+            };
+
+            assert!(trace(args).is_ok())
+        }
+    }
+}
