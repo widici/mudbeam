@@ -25,7 +25,7 @@ pub fn get_ip_from_hostname(addr: String) -> Result<IpAddr, Error> {
 
 pub fn get_hostname_from_ip(addr: &IpAddr) -> Option<String> {
     return match lookup_addr(addr) {
-        Ok(url) => Some(url),
+        Ok(hostname) => Some(hostname),
         Err(_) => return None,
     };
 }

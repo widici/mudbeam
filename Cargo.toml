@@ -1,6 +1,7 @@
 [package]
 name = "mudbeam"
 authors = ["widici"]
+description = "A traceroute implementation in rust"
 version = "0.1.0"
 edition = "2021"
 
