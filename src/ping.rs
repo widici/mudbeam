@@ -29,9 +29,9 @@ impl Pinger {
     }
 
     pub fn send(&mut self, ttl: u8) -> Result<Instant, Error> {
-        let mut payload = [0u8; 64];
+        let mut buffer = [0u8; 64];
 
-        let mut packet = MutableEchoRequestPacket::new(&mut payload).unwrap();
+        let mut packet = MutableEchoRequestPacket::new(&mut buffer).unwrap();
         packet.set_icmp_type(EchoRequest);
         packet.set_checksum(checksum(packet.packet(), 1));
 
